@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'camera_screen.dart'; // Import the CameraScreen file
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -23,7 +24,11 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Add button action here
+                // Navigate to CameraScreen when button is pressed
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CameraScreen()),
+                );
               },
               child: const Text('Get Started'),
             ),
