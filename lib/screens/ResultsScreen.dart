@@ -8,26 +8,12 @@ class ResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> results = [
-      {
-        'image': 'https://via.placeholder.com/150',
-        'title': 'MANGO KNITTED BLACK TOP-WOMEN',
-        'price': '\$26',
-        'store': 'Amazon',
-      },
-      {
-        'image': 'https://via.placeholder.com/150',
-        'title': 'MANGO KNITTED BLACK TOP-WOMEN',
-        'price': '\$26',
-        'store': 'Amazon',
-      },
-      {
-        'image': 'https://via.placeholder.com/150',
-        'title': 'MANGO KNITTED BLACK TOP-WOMEN',
-        'price': '\$26',
-        'store': 'Amazon',
-      },
-    ];
+    final List<Map<String, String>> results = List.generate(10, (index) => {
+      'image': 'https://via.placeholder.com/150',
+      'title': 'MANGO KNITTED BLACK TOP-WOMEN',
+      'price': '\$26',
+      'store': 'Amazon',
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -45,7 +31,7 @@ class ResultsScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Smaller box for captured image
+          // Top container for captured image
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Center(
@@ -73,9 +59,10 @@ class ResultsScreen extends StatelessWidget {
               ),
             ),
           ),
+          // Expanded widget for scrollable list
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
               itemCount: results.length,
               itemBuilder: (context, index) {
                 final result = results[index];
@@ -139,7 +126,6 @@ class ResultsScreen extends StatelessWidget {
                 );
               },
             ),
-
           ),
         ],
       ),
