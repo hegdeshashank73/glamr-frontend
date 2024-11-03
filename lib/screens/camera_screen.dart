@@ -3,8 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:glamr/screens/ResultsScreen.dart';
-
-
+import 'package:image_picker/image_picker.dart';
 
 class CameraScreen extends StatefulWidget {
   @override
@@ -16,6 +15,7 @@ class _CameraScreenState extends State<CameraScreen> {
   XFile? _imageFile;
   Uint8List? _imageBytes;
   List<CameraDescription>? cameras;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -36,26 +36,22 @@ class _CameraScreenState extends State<CameraScreen> {
   Future<void> captureImage() async {
     if (_cameraController != null) {
       final image = await _cameraController!.takePicture();
-      final imageBytes = await image.readAsBytes(); // Read image as bytes
+      final imageBytes = await image.readAsBytes();
       setState(() {
         _imageFile = image;
-        _imageBytes = imageBytes; // Store the bytes to display on web
+        _imageBytes = imageBytes;
       });
     }
   }
 
-  Future<void> sendImageToApi() async {
-    if (_imageFile != null) {
-      final uri = Uri.parse('https://yourapiurl.com/upload');
-      final request = http.MultipartRequest('POST', uri)
-        ..files.add(await http.MultipartFile.fromPath('image', _imageFile!.path));
-
-      final response = await request.send();
-      if (response.statusCode == 200) {
-        print("Image uploaded successfully");
-      } else {
-        print("Failed to upload image");
-      }
+  Future<void> pickImageFromGallery() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final imageBytes = await pickedFile.readAsBytes();
+      setState(() {
+        _imageFile = XFile(pickedFile.path);
+        _imageBytes = imageBytes;
+      });
     }
   }
 
@@ -67,106 +63,129 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: Colors.white, // Set background color to white
-      body: Column(
+      backgroundColor: Colors.black,
+      body: Stack(
         children: [
-          // Container for camera preview with specific padding and alignment
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      spreadRadius: 2,
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: _imageBytes == null
-                      ? (_cameraController != null && _cameraController!.value.isInitialized
-                      ? AspectRatio(
-                    aspectRatio: _cameraController!.value.aspectRatio,
-                    child: CameraPreview(_cameraController!),
-                  )
-                      : Center(child: CircularProgressIndicator()))
-                      : Image.memory(
-                    _imageBytes!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
-                ),
-              ),
+          // Fullscreen camera preview or selected image
+          Positioned.fill(
+            child: _imageBytes == null
+                ? (_cameraController != null && _cameraController!.value.isInitialized
+                ? CameraPreview(_cameraController!)
+                : Center(child: CircularProgressIndicator()))
+                : Image.memory(
+              _imageBytes!,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
             ),
           ),
 
-          // Capture button or action buttons
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: _imageFile == null
-                ? Center(
-              child: GestureDetector(
-                onTap: captureImage,
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.black, width: 4),
-                  ),
-                ),
+          // Bottom overlay with action buttons
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 20.0),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.4), // Semi-transparent overlay
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
-            )
-                : Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _imageFile = null; // Clear the image file to reset
-                      _imageBytes = null; // Clear the bytes as well
-                      initializeCamera(); // Reinitialize camera for new capture
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              child: _imageFile == null
+              // Initial state with gallery and capture buttons
+                  ? Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Gallery icon aligned to the left
+                  GestureDetector(
+                    onTap: pickImageFromGallery,
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      margin: EdgeInsets.only(left: 20),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Icon(
+                        Icons.photo,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                   ),
-                  child: Text("Retake", style: TextStyle(color: Colors.white)),
-                ),
-                ElevatedButton(
-                  onPressed:  () {
-                    if (_imageBytes != null) {
-                      // Navigate to the ResultsScreen with the captured image data
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ResultsScreen(capturedImage: _imageBytes!),
+
+                  // Capture button in the center
+                  GestureDetector(
+                    onTap: captureImage,
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black, width: 4),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 50), // Spacer for alignment on the right
+                ],
+              )
+              // After capturing or picking an image
+                  : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Retake button at approximately 1/3rd of the screen width
+                  Padding(
+                    padding: EdgeInsets.only(left: screenWidth * 0.15),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _imageFile = null;
+                          _imageBytes = null;
+                          initializeCamera();
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text("Retake", style: TextStyle(color: Colors.white)),
                     ),
                   ),
-                  child: Text("Search", style: TextStyle(color: Colors.white)),
-                ),
-              ],
+
+                  // Search button at approximately 2/3rd of the screen width
+                  Padding(
+                    padding: EdgeInsets.only(right: screenWidth * 0.15),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_imageBytes != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ResultsScreen(capturedImage: _imageBytes!),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text("Search", style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
