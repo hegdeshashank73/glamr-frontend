@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:glamr/services/search_api.dart';
 import 'package:http/http.dart' as http;
 import 'package:glamr/screens/ResultsScreen.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,12 +18,65 @@ class _CameraScreenState extends State<CameraScreen> {
   Uint8List? _imageBytes;
   List<CameraDescription>? cameras;
   final ImagePicker _picker = ImagePicker();
+  final ApiService _apiService = ApiService();
+  bool _isProcessing = false;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     initializeCamera();
   }
+
+  Future<void> _processAndNavigate() async {
+    if (_imageBytes == null) return;
+    if (_isProcessing) return;
+
+    // Debounce the function calls
+    if (_debounceTimer?.isActive ?? false) return;
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {});
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      final uploadResponse = await _apiService.getUploadUrl();
+      print(uploadResponse);
+      final String uploadUrl = uploadResponse['upload_url'];
+      final String s3Key = uploadResponse['key'];
+
+      await _apiService.uploadImageToS3(uploadUrl, _imageBytes!);
+
+      final searchResults = await _apiService.searchOptions(s3Key);
+      print(searchResults);
+
+      if (mounted) Navigator.of(context).pop();
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResultsScreen(
+            capturedImage: _imageBytes!,
+            searchResults: searchResults,
+          ),
+        ),
+      );
+    } catch (e) {
+      print('Error occured $e');
+      if (mounted) Navigator.of(context).pop();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
+
 
   Future<void> initializeCamera() async {
     cameras = await availableCameras();
@@ -57,7 +112,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   void dispose() {
-    _cameraController?.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -83,7 +138,6 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
           ),
 
-          // Bottom overlay with action buttons
           Positioned(
             bottom: 0,
             left: 0,
@@ -95,11 +149,9 @@ class _CameraScreenState extends State<CameraScreen> {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: _imageFile == null
-              // Initial state with gallery and capture buttons
                   ? Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Gallery icon aligned to the left
                   GestureDetector(
                     onTap: pickImageFromGallery,
                     child: Container(
@@ -134,11 +186,9 @@ class _CameraScreenState extends State<CameraScreen> {
                   SizedBox(width: 50), // Spacer for alignment on the right
                 ],
               )
-              // After capturing or picking an image
                   : Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Retake button at approximately 1/3rd of the screen width
                   Padding(
                     padding: EdgeInsets.only(left: screenWidth * 0.15),
                     child: ElevatedButton(
@@ -160,20 +210,10 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   ),
 
-                  // Search button at approximately 2/3rd of the screen width
                   Padding(
                     padding: EdgeInsets.only(right: screenWidth * 0.15),
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (_imageBytes != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ResultsScreen(capturedImage: _imageBytes!),
-                            ),
-                          );
-                        }
-                      },
+                      onPressed: _isProcessing ? null : _processAndNavigate,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
@@ -181,7 +221,13 @@ class _CameraScreenState extends State<CameraScreen> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text("Search", style: TextStyle(color: Colors.white)),
+                      child: _isProcessing
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                          : const Text("Search", style: TextStyle(color: Colors.white)),
                     ),
                   ),
                 ],

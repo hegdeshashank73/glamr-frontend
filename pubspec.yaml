@@ -25,7 +25,7 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   cupertino_icons: ^1.0.2
-
+  url_launcher: ^6.1.14
 dev_dependencies:
   flutter_test:
     sdk: flutter

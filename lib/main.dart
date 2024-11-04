@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: SubscriptionScreen(), // Set SubscriptionScreen as the home page
+      home: SubscriptionScreen(),
     );
   }
 }
