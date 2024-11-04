@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'screens/SubscriptionScreen.dart'; // Import SubscriptionScreen
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -15,7 +13,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const HomeScreen(),
+      home: SubscriptionScreen(), // Set SubscriptionScreen as the home page
     );
   }
 }
