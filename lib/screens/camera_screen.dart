@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:glamr/services/search_api.dart';
 import 'package:http/http.dart' as http;
@@ -17,6 +19,8 @@ class _CameraScreenState extends State<CameraScreen> {
   XFile? _imageFile;
   Uint8List? _imageBytes;
   List<CameraDescription>? cameras;
+  int _selectedCameraIndex = 0;
+
   final ImagePicker _picker = ImagePicker();
   final ApiService _apiService = ApiService();
   bool _isProcessing = false;
@@ -41,14 +45,13 @@ class _CameraScreenState extends State<CameraScreen> {
 
     try {
       final uploadResponse = await _apiService.getUploadUrl();
-      print(uploadResponse);
+
       final String uploadUrl = uploadResponse['upload_url'];
       final String s3Key = uploadResponse['key'];
 
       await _apiService.uploadImageToS3(uploadUrl, _imageBytes!);
 
       final searchResults = await _apiService.searchOptions(s3Key);
-      print(searchResults);
 
       if (mounted) Navigator.of(context).pop();
       if (!mounted) return;
@@ -62,7 +65,7 @@ class _CameraScreenState extends State<CameraScreen> {
         ),
       );
     } catch (e) {
-      print('Error occured $e');
+
       if (mounted) Navigator.of(context).pop();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -76,22 +79,48 @@ class _CameraScreenState extends State<CameraScreen> {
       }
     }
   }
+  Future<void> switchCamera() async {
+    if (cameras == null || cameras!.length < 2) return;
 
+    _selectedCameraIndex = (_selectedCameraIndex + 1) % cameras!.length;
+
+    await _cameraController?.dispose();
+
+    _cameraController = CameraController(
+      cameras![_selectedCameraIndex],
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
+
+    try {
+      await _cameraController!.initialize();
+      if (mounted) setState(() {});
+    } catch (e) {
+      print('Error switching camera: $e');
+    }
+  }
 
   Future<void> initializeCamera() async {
     cameras = await availableCameras();
+    if (cameras!.isEmpty) return;
+
     _cameraController = CameraController(
-      cameras![0],
+      cameras![_selectedCameraIndex],
       ResolutionPreset.medium,
+      enableAudio: false,
     );
     await _cameraController!.initialize();
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   Future<void> captureImage() async {
     if (_cameraController != null) {
       final image = await _cameraController!.takePicture();
       final imageBytes = await image.readAsBytes();
+
+      await _cameraController!.dispose();
+      _cameraController = null;
+
       setState(() {
         _imageFile = image;
         _imageBytes = imageBytes;
@@ -150,27 +179,30 @@ class _CameraScreenState extends State<CameraScreen> {
               ),
               child: _imageFile == null
                   ? Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,  // Changed to spaceEvenly
                 children: [
-                  GestureDetector(
-                    onTap: pickImageFromGallery,
-                    child: Container(
-                      width: 50,
-                      height: 50,
-                      margin: EdgeInsets.only(left: 20),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: Icon(
-                        Icons.photo,
-                        color: Colors.white,
-                        size: 30,
+                  // Gallery button on the left
+                  Container(
+                    width: 50,
+                    margin: const EdgeInsets.only(left: 20),
+                    child: GestureDetector(
+                      onTap: pickImageFromGallery,
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.photo,
+                          color: Colors.white,
+                          size: 30,
+                        ),
                       ),
                     ),
                   ),
 
-                  // Capture button in the center
                   GestureDetector(
                     onTap: captureImage,
                     child: Container(
@@ -183,7 +215,29 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 50), // Spacer for alignment on the right
+                  Container(
+                    width: 50,
+                    margin: const EdgeInsets.only(right: 20),
+                    child: !kIsWeb && cameras != null && cameras!.length > 1
+                        ? GestureDetector(
+                      onTap: switchCamera,
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.flip_camera_ios,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                    )
+                        : const SizedBox(width: 50), // Maintains spacing on web
+                  ),
+
                 ],
               )
                   : Row(
@@ -192,21 +246,21 @@ class _CameraScreenState extends State<CameraScreen> {
                   Padding(
                     padding: EdgeInsets.only(left: screenWidth * 0.15),
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         setState(() {
                           _imageFile = null;
                           _imageBytes = null;
-                          initializeCamera();
                         });
+                        await initializeCamera();
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text("Retake", style: TextStyle(color: Colors.white)),
+                      child: const Text("Retake", style: TextStyle(color: Colors.white)),
                     ),
                   ),
 

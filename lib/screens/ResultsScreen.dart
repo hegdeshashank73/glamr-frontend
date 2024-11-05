@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:glamr/screens/SubscriptionScreen.dart';
+import 'package:glamr/screens/home_screen.dart';
 import 'dart:typed_data';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -46,7 +48,12 @@ class ResultsScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => SubscriptionScreen()),
+            );
+          },
         ),
         title: const Text(
           'Best Results',
