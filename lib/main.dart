@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/SubscriptionScreen.dart'; // Import SubscriptionScreen
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
@@ -8,7 +9,7 @@ Future<void> main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
+  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

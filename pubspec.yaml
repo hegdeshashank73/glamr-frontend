@@ -15,6 +15,7 @@ dependencies:
   # Dependencies for camera access
   camera: ^0.10.0
   flutter_dotenv: ^5.1.0
+
   image_picker: ^0.8.5+3
 
   # For making HTTP requests to the API
@@ -37,6 +38,7 @@ flutter:
   assets:
       - .env
       - .env.development
+
   # Adding custom assets (if you have any)
   #assets:
     #- assets/ # Uncomment this line if you add assets in the assets folder

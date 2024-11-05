@@ -2,6 +2,7 @@
 
 import 'dart:typed_data';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -53,6 +54,7 @@ class ApiService {
         'country': 'us'
       };
       final uri = Uri.parse('$baseUrl/search/options')
+
           .replace(queryParameters: queryParameters);
 
       final response = await http.get(

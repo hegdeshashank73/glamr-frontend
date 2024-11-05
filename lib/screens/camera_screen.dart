@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:glamr/services/search_api.dart';
 import 'package:http/http.dart' as http;
@@ -19,6 +20,7 @@ class _CameraScreenState extends State<CameraScreen> {
   Uint8List? _imageBytes;
   List<CameraDescription>? cameras;
   int _selectedCameraIndex = 0;
+
   final ImagePicker _picker = ImagePicker();
   final ApiService _apiService = ApiService();
   bool _isProcessing = false;
@@ -43,6 +45,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
     try {
       final uploadResponse = await _apiService.getUploadUrl();
+
       final String uploadUrl = uploadResponse['upload_url'];
       final String s3Key = uploadResponse['key'];
 
@@ -62,6 +65,7 @@ class _CameraScreenState extends State<CameraScreen> {
         ),
       );
     } catch (e) {
+
       if (mounted) Navigator.of(context).pop();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -116,6 +120,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
       await _cameraController!.dispose();
       _cameraController = null;
+
       setState(() {
         _imageFile = image;
         _imageBytes = imageBytes;
@@ -210,7 +215,6 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                     ),
                   ),
-
                   Container(
                     width: 50,
                     margin: const EdgeInsets.only(right: 20),
@@ -233,6 +237,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     )
                         : const SizedBox(width: 50), // Maintains spacing on web
                   ),
+
                 ],
               )
                   : Row(

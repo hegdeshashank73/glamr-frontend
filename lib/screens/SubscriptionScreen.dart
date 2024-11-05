@@ -148,6 +148,7 @@ class SubscriptionScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () {},
                     child: const Text(
+
                       "Privacy Policy",
                       style: TextStyle(
                         color: Colors.grey,
