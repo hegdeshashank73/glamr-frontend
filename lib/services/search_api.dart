@@ -1,12 +1,13 @@
 // lib/services/api_service.dart
 
 import 'dart:typed_data';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ApiService {
-  static const String baseUrl = '';
-  static const String token = '';
+  static String baseUrl = dotenv.env['BACKEND_BASE_URL'] ?? '';
+  static String token = dotenv.env['TOKEN'] ?? '';
 
   Future<Map<String, dynamic>> getUploadUrl() async {
     try {
@@ -51,7 +52,7 @@ class ApiService {
         's3_key': s3Key,
         'country': 'us'
       };
-      final uri = Uri.parse('http://54.82.74.178:1729/search/options')
+      final uri = Uri.parse('$baseUrl/search/options')
           .replace(queryParameters: queryParameters);
 
       final response = await http.get(

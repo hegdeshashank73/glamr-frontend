@@ -11,10 +11,10 @@ class SubscriptionScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            SizedBox(height: 60), // Space at the top for layout alignment
+            const SizedBox(height: 60), // Space at the top for layout alignment
 
             // Title and Subtitle
-            Column(
+            const Column(
               children: [
                 Text(
                   "UNLIMITED SEARCHES",
@@ -50,7 +50,7 @@ class SubscriptionScreen extends StatelessWidget {
             // Payment Information and Button
             Column(
               children: [
-                Text(
+                const Text(
                   "✓ No payment due now",
                   style: TextStyle(
                     fontSize: 14,
@@ -77,7 +77,7 @@ class SubscriptionScreen extends StatelessWidget {
                     ),
                     minimumSize: Size(double.infinity, 56), // Full-width button
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -92,10 +92,10 @@ class SubscriptionScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
 
                 // Subscription Information
-                Text(
+                const Text(
                   "3 days free, then \$6.99 per week",
                   style: TextStyle(
                     fontSize: 12,
@@ -113,7 +113,7 @@ class SubscriptionScreen extends StatelessWidget {
                 children: [
                   TextButton(
                     onPressed: () {},
-                    child: Text(
+                    child: const Text(
                       "Terms of use",
                       style: TextStyle(
                         color: Colors.grey,
@@ -121,7 +121,7 @@ class SubscriptionScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Text(
+                  const Text(
                     "|",
                     style: TextStyle(
                       color: Colors.grey,
@@ -130,7 +130,7 @@ class SubscriptionScreen extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () {},
-                    child: Text(
+                    child: const Text(
                       "Restore Purchase",
                       style: TextStyle(
                         color: Colors.grey,
@@ -138,7 +138,7 @@ class SubscriptionScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Text(
+                  const Text(
                     "|",
                     style: TextStyle(
                       color: Colors.grey,
@@ -147,7 +147,7 @@ class SubscriptionScreen extends StatelessWidget {
                   ),
                   TextButton(
                     onPressed: () {},
-                    child: Text(
+                    child: const Text(
                       "Privacy Policy",
                       style: TextStyle(
                         color: Colors.grey,
